@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug Spring Boot",
+      "request": "launch",
+      "mainClass": "com.example.SimpleApp",
+      "projectName": "simple-app",
+      "args": "",
+      "env": {
+        "SPRING_PROFILES_ACTIVE": "dev"
+      }
+    },
+    {
+      "type": "java",
+      "name": "Run Spring Boot",
+      "request": "launch",
+      "mainClass": "com.example.SimpleApp",
+      "projectName": "simple-app"
+    }
+  ]
+}

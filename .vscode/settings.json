@@ -1,0 +1,21 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+  "java.format.settings.profile": "GoogleStyle",
+  "java.saveActions.organizeImports": true,
+  "java.completion.importOrder": ["java", "javax", "org", "com"],
+  "java.sources.organizeImports.starThreshold": 99,
+  "java.sources.organizeImports.staticStarThreshold": 99,
+  "java.maven.downloadSources": true,
+  "java.maven.downloadJavadoc": true,
+  "java.configuration.maven.userSettings": "",
+  "java.configuration.maven.globalSettings": "",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "/path/to/jdk-17",
+      "default": true
+    }
+  ]
+}
