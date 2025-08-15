@@ -30,6 +30,10 @@ public class Invoice {
     @ManyToOne
     @JoinColumn(name = "station_id", nullable = false)
     private Station station;  // Trạm lấy xe
+    
+    @ManyToOne
+    @JoinColumn(name = "return_station_id")
+    private Station returnStation;  // Trạm trả xe (có thể khác trạm lấy xe)
 
     private Integer bikeQuantity;  // Số lượng xe đã thuê
     private Double totalPrice;  // Tổng số tiền thanh toán
@@ -88,6 +92,14 @@ public class Invoice {
 
     public void setStation(Station station) {
         this.station = station;
+    }
+    
+    public Station getReturnStation() {
+        return returnStation;
+    }
+    
+    public void setReturnStation(Station returnStation) {
+        this.returnStation = returnStation;
     }
 
     public Integer getBikeQuantity() {

@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.entity.Invoice;
 import com.example.dto.InvoiceResponse;
 import com.example.service.InvoiceService;
+import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,13 +26,9 @@ public class InvoiceController {
     // Tạo invoice từ booking
     @PostMapping("/create-from-booking/{bookingId}")
     public ResponseEntity<?> createInvoiceFromBooking(@PathVariable Long bookingId) {
-        try {
-            Invoice invoice = invoiceService.createInvoiceFromBooking(bookingId);
-            InvoiceResponse response = new InvoiceResponse(invoice);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
+        Invoice invoice = invoiceService.createInvoiceFromBooking(bookingId);
+        InvoiceResponse response = new InvoiceResponse(invoice);
+        return ResponseEntity.ok(response);
     }
     
     // Lấy hóa đơn theo booking ID
@@ -42,7 +39,7 @@ public class InvoiceController {
             InvoiceResponse response = new InvoiceResponse(invoice.get());
             return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.notFound().build();
+            throw new InvoiceNotFoundException("Không tìm thấy hóa đơn cho booking ID: " + bookingId);
         }
     }
     
@@ -54,7 +51,7 @@ public class InvoiceController {
             InvoiceResponse response = new InvoiceResponse(invoice.get());
             return ResponseEntity.ok(response);
         } else {
-            return ResponseEntity.notFound().build();
+            throw new InvoiceNotFoundException("Không tìm thấy hóa đơn với ID: " + invoiceId);
         }
     }
     
@@ -63,7 +60,7 @@ public class InvoiceController {
     public ResponseEntity<?> getMyInvoices() {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
-            return ResponseEntity.badRequest().build();
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
         }
         
         List<Invoice> invoices = invoiceService.getUserInvoices(userEmail);
@@ -78,45 +75,30 @@ public class InvoiceController {
     // Kiểm tra có thể lấy xe không (dựa vào QR code)
     @GetMapping("/check-pickup")
     public ResponseEntity<?> checkBikePickup(@RequestParam String qrCode) {
-        try {
-            var result = invoiceService.checkBikePickup(qrCode);
-            return ResponseEntity.ok(result);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
+        var result = invoiceService.checkBikePickup(qrCode);
+        return ResponseEntity.ok(result);
     }
     
     // Lấy xe (quét QR code)
     @PostMapping("/pickup-by-qr")
     public ResponseEntity<?> pickupBikeByQR(@RequestParam String qrCode) {
-        try {
-            Invoice invoice = invoiceService.pickupBike(qrCode);
-            return ResponseEntity.ok(invoice);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
+        Invoice invoice = invoiceService.pickupBike(qrCode);
+        return ResponseEntity.ok(invoice);
     }
     
     // User bấm nút RETURNED (đánh dấu muốn trả xe)
     @PostMapping("/{invoiceId}/mark-return")
     public ResponseEntity<?> markBikeForReturn(@PathVariable Long invoiceId) {
-        try {
-            Invoice invoice = invoiceService.markBikeForReturn(invoiceId);
-            return ResponseEntity.ok(invoice);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
+        Invoice invoice = invoiceService.markBikeForReturn(invoiceId);
+        return ResponseEntity.ok(invoice);
     }
     
     // Trả xe về trạm (quét QR code)
     @PostMapping("/return-by-qr")
-    public ResponseEntity<?> returnBikeByQR(@RequestParam String qrCode) {
-        try {
-            Invoice returnedInvoice = invoiceService.returnBike(qrCode);
-            return ResponseEntity.ok(returnedInvoice);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
-        }
+    public ResponseEntity<?> returnBikeByQR(@RequestParam String qrCode, 
+                                          @RequestParam(required = false) Long returnStationId) {
+        Invoice returnedInvoice = invoiceService.returnBike(qrCode, returnStationId);
+        return ResponseEntity.ok(returnedInvoice);
     }
     
     // Admin: Lấy tất cả hóa đơn

@@ -1,8 +1,18 @@
 package com.example.dto;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Max;
+
 public class BookingRequest {
+    @NotNull(message = "ID trạm không được để trống")
     private Long stationId;
+    
+    @NotNull(message = "Số lượng xe không được để trống")
+    @Min(value = 1, message = "Số lượng xe phải lớn hơn 0")
+    @Max(value = 10, message = "Số lượng xe không được vượt quá 10")
     private Integer bikeQuantity = 1; // Mặc định 1 xe
+    
     private String notes;
     
     // Constructors

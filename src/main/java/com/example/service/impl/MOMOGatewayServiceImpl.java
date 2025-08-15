@@ -2,6 +2,7 @@ package com.example.service.impl;
 
 import com.example.service.PaymentGatewayService;
 import com.example.dto.PaymentRequest;
+import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -77,7 +78,7 @@ public class MOMOGatewayServiceImpl implements PaymentGatewayService {
             return result;
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo MOMO payment session: " + e.getMessage());
+            throw new PaymentFailedException("Lỗi tạo MOMO payment session: " + e.getMessage());
         }
     }
     
@@ -114,7 +115,7 @@ public class MOMOGatewayServiceImpl implements PaymentGatewayService {
             return result;
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi xử lý MOMO webhook: " + e.getMessage());
+            throw new PaymentFailedException("Lỗi xử lý MOMO webhook: " + e.getMessage());
         }
     }
     
@@ -212,7 +213,7 @@ public class MOMOGatewayServiceImpl implements PaymentGatewayService {
             return hexString.toString();
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo MOMO signature", e);
+            throw new PaymentFailedException("Lỗi tạo MOMO signature: " + e.getMessage());
         }
     }
     

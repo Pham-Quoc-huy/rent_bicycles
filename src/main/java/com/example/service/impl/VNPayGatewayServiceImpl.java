@@ -2,6 +2,7 @@ package com.example.service.impl;
 
 import com.example.service.PaymentGatewayService;
 import com.example.dto.PaymentRequest;
+import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -77,7 +78,7 @@ public class VNPayGatewayServiceImpl implements PaymentGatewayService {
             return result;
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo VNPay session: " + e.getMessage());
+            throw new PaymentFailedException("Lỗi tạo VNPay session: " + e.getMessage());
         }
     }
     
@@ -116,7 +117,7 @@ public class VNPayGatewayServiceImpl implements PaymentGatewayService {
             return result;
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi xử lý VNPay webhook: " + e.getMessage());
+            throw new PaymentFailedException("Lỗi xử lý VNPay webhook: " + e.getMessage());
         }
     }
     
@@ -244,7 +245,7 @@ public class VNPayGatewayServiceImpl implements PaymentGatewayService {
             return hexString.toString();
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo secure hash: " + e.getMessage());
+            throw new PaymentFailedException("Lỗi tạo secure hash: " + e.getMessage());
         }
     }
     

@@ -20,6 +20,7 @@ import com.example.service.InvoiceService;
 import com.example.service.PaymentGatewayService;
 import com.example.service.PaymentService;
 import com.example.service.QRCodeService;
+import com.example.exception.*;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -47,17 +48,16 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public PaymentResponse createPayment(PaymentRequest request) {
-        try {
-            // Validate request
-            if (!validatePaymentRequest(request)) {
-                throw new RuntimeException("Payment request không hợp lệ");
-            }
-            
-            // Kiểm tra invoice có tồn tại không
-            Optional<com.example.entity.Invoice> invoiceOpt = invoiceService.getInvoiceById(request.getInvoiceId());
-            if (invoiceOpt.isEmpty()) {
-                throw new RuntimeException("Không tìm thấy invoice");
-            }
+        // Validate request
+        if (!validatePaymentRequest(request)) {
+            throw new IllegalArgumentException("Payment request không hợp lệ");
+        }
+        
+        // Kiểm tra invoice có tồn tại không
+        Optional<com.example.entity.Invoice> invoiceOpt = invoiceService.getInvoiceById(request.getInvoiceId());
+        if (invoiceOpt.isEmpty()) {
+            throw new InvoiceNotFoundException("Không tìm thấy invoice với ID: " + request.getInvoiceId());
+        }
             
             var invoice = invoiceOpt.get();
             
@@ -112,28 +112,24 @@ public class PaymentServiceImpl implements PaymentService {
             }
             
             return response;
-            
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo payment: " + e.getMessage());
-        }
     }
     
     @Override
     public Payment getPaymentById(Long paymentId) {
         return paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy payment"));
+                .orElseThrow(() -> new PaymentNotFoundException("Không tìm thấy payment với ID: " + paymentId));
     }
     
     @Override
     public Payment getPaymentByGatewayId(String gatewayId) {
         return paymentRepository.findByGatewayId(gatewayId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy payment với gateway ID: " + gatewayId));
+                .orElseThrow(() -> new PaymentNotFoundException("Không tìm thấy payment với gateway ID: " + gatewayId));
     }
     
     @Override
     public Payment getPaymentByTransactionId(String transactionId) {
         return paymentRepository.findByTransactionId(transactionId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy payment với transaction ID: " + transactionId));
+                .orElseThrow(() -> new PaymentNotFoundException("Không tìm thấy payment với transaction ID: " + transactionId));
     }
     
     @Override
@@ -190,18 +186,30 @@ public class PaymentServiceImpl implements PaymentService {
     }
     
     @Override
+    @Transactional
+    public Payment updatePayment(Payment payment) {
+        if (payment.getId() == null) {
+            throw new IllegalArgumentException("Payment ID không được null");
+        }
+        
+        // Kiểm tra payment có tồn tại không
+        if (!paymentRepository.existsById(payment.getId())) {
+            throw new PaymentNotFoundException("Không tìm thấy payment với ID: " + payment.getId());
+        }
+        
+        payment.setUpdatedAt(LocalDateTime.now());
+        return paymentRepository.save(payment);
+    }
+    
+    @Override
     public void processWebhook(String gatewayName, Map<String, Object> webhookData) {
-        try {
-            String gatewayId = (String) webhookData.get("gatewayId");
-            String status = (String) webhookData.get("status");
-            
-            if ("SUCCESS".equals(status)) {
-                processPaymentSuccess(gatewayId, (String) webhookData.get("transactionId"));
-            } else if ("FAILED".equals(status)) {
-                processPaymentFailure(gatewayId, (String) webhookData.get("message"));
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi xử lý webhook: " + e.getMessage());
+        String gatewayId = (String) webhookData.get("gatewayId");
+        String status = (String) webhookData.get("status");
+        
+        if ("SUCCESS".equals(status)) {
+            processPaymentSuccess(gatewayId, (String) webhookData.get("transactionId"));
+        } else if ("FAILED".equals(status)) {
+            processPaymentFailure(gatewayId, (String) webhookData.get("message"));
         }
     }
     
@@ -250,7 +258,7 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = getPaymentById(paymentId);
         
         if (!"PENDING".equals(payment.getStatus())) {
-            throw new RuntimeException("Chỉ có thể hủy payment đang pending");
+            throw new PaymentStatusException("Chỉ có thể hủy payment đang pending");
         }
         
         payment.setStatus("CANCELLED");
@@ -266,11 +274,11 @@ public class PaymentServiceImpl implements PaymentService {
         Payment payment = getPaymentById(paymentId);
         
         if (!"SUCCESS".equals(payment.getStatus())) {
-            throw new RuntimeException("Chỉ có thể refund payment đã thành công");
+            throw new PaymentStatusException("Chỉ có thể refund payment đã thành công");
         }
         
         if (amount.compareTo(payment.getAmount()) > 0) {
-            throw new RuntimeException("Số tiền refund không được lớn hơn số tiền đã thanh toán");
+            throw new IllegalArgumentException("Số tiền refund không được lớn hơn số tiền đã thanh toán");
         }
         
         // TODO: Implement refund logic với gateway

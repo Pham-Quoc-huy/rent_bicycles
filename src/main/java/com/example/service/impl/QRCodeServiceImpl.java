@@ -6,6 +6,7 @@ import com.example.dto.QRCodeResponse;
 import com.example.repository.QRCodeReponsitory;
 import com.example.repository.InvoiceRepository;
 import com.example.service.QRCodeService;
+import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -69,12 +70,12 @@ public class QRCodeServiceImpl implements QRCodeService {
     public QRCode createQRCode(String qrCode, Long invoiceId, String type) {
         // Kiểm tra xem QR code đã tồn tại chưa
         if (qrCodeRepository.existsByQrCode(qrCode)) {
-            throw new RuntimeException("QR code đã tồn tại: " + qrCode);
+            throw new InvalidQRCodeException("QR code đã tồn tại: " + qrCode);
         }
         
         // Kiểm tra xem invoice có tồn tại không
         if (!invoiceRepository.existsById(invoiceId)) {
-            throw new RuntimeException("Invoice không tồn tại với ID: " + invoiceId);
+            throw new InvoiceNotFoundException("Invoice không tồn tại với ID: " + invoiceId);
         }
         
         // Tạo QR code mới với type

@@ -12,6 +12,7 @@ import com.example.entity.Booking;
 import com.example.entity.Invoice;
 import com.example.entity.Station;
 import com.example.entity.User;
+import com.example.exception.*;
 import com.example.repository.BookingRepository;
 import com.example.repository.StationRepository;
 import com.example.repository.UserRepository;
@@ -35,31 +36,25 @@ public class BookingServiceImpl implements BookingService {
     
     @Override
     public BookingResponse createBooking(String userEmail, BookingRequest request) {
-        // Validation
-        if (request.getStationId() == null) {
-            return BookingResponse.error("ID trạm không được để trống");
-        }
-        if (request.getBikeQuantity() == null || request.getBikeQuantity() <= 0) {
-            return BookingResponse.error("Số lượng xe phải lớn hơn 0");
-        }
+        // Validation đã được xử lý bởi @Valid annotation
         
         // Tìm user
         Optional<User> userOpt = userRepository.findByEmail(userEmail);
         if (userOpt.isEmpty()) {
-            return BookingResponse.error("Không tìm thấy người dùng");
+            throw new UserNotFoundException("Không tìm thấy người dùng với email: " + userEmail);
         }
         User user = userOpt.get();
         
         // Tìm station
         Optional<Station> stationOpt = stationRepository.findById(request.getStationId());
         if (stationOpt.isEmpty()) {
-            return BookingResponse.error("Không tìm thấy trạm xe");
+            throw new StationNotFoundException("Không tìm thấy trạm xe với ID: " + request.getStationId());
         }
         Station station = stationOpt.get();
         
         // Kiểm tra số lượng xe có sẵn
         if (station.getAvailableBikes() < request.getBikeQuantity()) {
-            return BookingResponse.error("Không đủ xe tại trạm này. Có sẵn: " + station.getAvailableBikes() + " xe");
+            throw new InsufficientBikesException("Không đủ xe tại trạm này. Có sẵn: " + station.getAvailableBikes() + " xe");
         }
         
         // Tạo booking
@@ -77,12 +72,8 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
         
         // Tự động tạo invoice
-        try {
-            Invoice invoice = invoiceService.createInvoiceFromBooking(booking.getId());
-            System.out.println("✅ Đã tạo invoice: " + invoice.getId());
-        } catch (Exception e) {
-            System.err.println("❌ Lỗi tạo invoice: " + e.getMessage());
-        }
+        Invoice invoice = invoiceService.createInvoiceFromBooking(booking.getId());
+        System.out.println("✅ Đã tạo invoice: " + invoice.getId());
         
         return BookingResponse.success(booking, "Đặt xe thành công! Vui lòng đến trạm và quét mã QR để lấy xe.");
     }
@@ -104,14 +95,14 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse getBookingById(Long bookingId, String userEmail) {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            return BookingResponse.error("Không tìm thấy booking");
+            throw new BookingNotFoundException("Không tìm thấy booking với ID: " + bookingId);
         }
         
         Booking booking = bookingOpt.get();
         
         // Kiểm tra quyền truy cập
         if (!booking.getUser().getEmail().equals(userEmail)) {
-            return BookingResponse.error("Không có quyền truy cập booking này");
+            throw new UnauthorizedAccessException("Không có quyền truy cập booking này");
         }
         
         return BookingResponse.success(booking, "");
@@ -121,19 +112,19 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse cancelBooking(Long bookingId, String userEmail) {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            return BookingResponse.error("Không tìm thấy booking");
+            throw new BookingNotFoundException("Không tìm thấy booking với ID: " + bookingId);
         }
         
         Booking booking = bookingOpt.get();
         
         // Kiểm tra quyền truy cập
         if (!booking.getUser().getEmail().equals(userEmail)) {
-            return BookingResponse.error("Không có quyền hủy booking này");
+            throw new UnauthorizedAccessException("Không có quyền hủy booking này");
         }
         
         // Kiểm tra trạng thái
         if (booking.getStatus() != Booking.BookingStatus.PENDING) {
-            return BookingResponse.error("Chỉ có thể hủy booking đang chờ xác nhận");
+            throw new BikeStatusException("Chỉ có thể hủy booking đang chờ xác nhận");
         }
         
         // Hủy booking
@@ -147,14 +138,14 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse confirmBooking(Long bookingId) {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            return BookingResponse.error("Không tìm thấy booking");
+            throw new BookingNotFoundException("Không tìm thấy booking với ID: " + bookingId);
         }
         
         Booking booking = bookingOpt.get();
         
         // Kiểm tra trạng thái
         if (booking.getStatus() != Booking.BookingStatus.PENDING) {
-            return BookingResponse.error("Chỉ có thể xác nhận booking đang chờ");
+            throw new BikeStatusException("Chỉ có thể xác nhận booking đang chờ");
         }
         
         // Xác nhận booking
@@ -168,19 +159,19 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponse completeBooking(Long bookingId, String userEmail) {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            return BookingResponse.error("Không tìm thấy booking");
+            throw new BookingNotFoundException("Không tìm thấy booking với ID: " + bookingId);
         }
         
         Booking booking = bookingOpt.get();
         
         // Kiểm tra quyền truy cập
         if (!booking.getUser().getEmail().equals(userEmail)) {
-            return BookingResponse.error("Không có quyền hoàn thành booking này");
+            throw new UnauthorizedAccessException("Không có quyền hoàn thành booking này");
         }
         
         // Kiểm tra trạng thái
         if (booking.getStatus() != Booking.BookingStatus.CONFIRMED) {
-            return BookingResponse.error("Booking phải được xác nhận trước khi hoàn thành");
+            throw new BikeStatusException("Booking phải được xác nhận trước khi hoàn thành");
         }
         
         // Hoàn thành booking

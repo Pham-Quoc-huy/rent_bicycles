@@ -23,7 +23,7 @@ public interface InvoiceService {
 
     
     // Trả xe (khi user trả xe về trạm)
-    Invoice returnBike(String qrCode);
+    Invoice returnBike(String qrCode, Long returnStationId);
     
     // Đánh dấu xe để trả (admin function)
     Invoice markBikeForReturn(Long invoiceId);

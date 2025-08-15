@@ -6,6 +6,7 @@
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/controller/BookingController.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/controller/InvoiceController.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/controller/PaymentController.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/controller/QRCodeController.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/controller/StationController.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/controller/TestController.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/dto/AuthResponse.java
@@ -17,6 +18,7 @@
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/dto/PaymentResponse.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/dto/PaymentStatusUpdateRequest.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/dto/QRCodeResponse.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/dto/QRScanResponse.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/dto/RegisterRequest.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/entity/Booking.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/entity/Invoice.java
@@ -24,6 +26,21 @@
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/entity/QRCode.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/entity/Station.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/entity/User.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/BikeStatusException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/BookingNotFoundException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/ErrorResponse.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/GlobalExceptionHandler.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/InsufficientBikesException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/InvalidQRCodeException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/InvoiceNotFoundException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/PaymentFailedException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/PaymentNotFoundException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/PaymentRequiredException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/PaymentStatusException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/QRCodeNotFoundException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/StationNotFoundException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/UnauthorizedAccessException.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/exception/UserNotFoundException.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/repository/BookingRepository.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/repository/InvoiceRepository.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/repository/PaymentRepository.java
@@ -34,7 +51,6 @@
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/security/JwtAuthenticationToken.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/security/JwtTokenUtil.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/AuthService.java
-/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/AuthServiceImpl.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/BookingService.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/InvoiceService.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/PaymentGatewayService.java

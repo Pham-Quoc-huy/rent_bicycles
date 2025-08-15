@@ -2,10 +2,13 @@ package com.example.controller;
 
 import com.example.service.PaymentService;
 import com.example.service.PaymentGatewayService;
+import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -178,7 +181,7 @@ public class TestController {
             return hexString.toString();
             
         } catch (Exception e) {
-            throw new RuntimeException("Lỗi tạo VNPay test signature", e);
+            throw new PaymentFailedException("Lỗi tạo VNPay test signature: " + e.getMessage());
         }
     }
 
@@ -240,6 +243,63 @@ public class TestController {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Lỗi test VNPay gateway: " + e.getMessage()
             ));
+        }
+    }
+
+    @PostMapping("/test-payment-success")
+    public ResponseEntity<?> testPaymentSuccess(@RequestBody Map<String, Object> request) {
+        try {
+            Long paymentId = Long.valueOf(request.get("paymentId").toString());
+            
+            // Simulate successful payment
+            var payment = paymentService.getPaymentById(paymentId);
+            payment.setStatus("SUCCESS");
+            payment.setGatewayId("TEST_SUCCESS_" + System.currentTimeMillis());
+            payment.setTransactionId("TEST_TXN_" + System.currentTimeMillis());
+            payment.setUpdatedAt(LocalDateTime.now());
+            
+            var savedPayment = paymentService.updatePayment(payment);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Payment marked as successful for testing");
+            response.put("payment", savedPayment);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @PostMapping("/test-payment-failed")
+    public ResponseEntity<?> testPaymentFailed(@RequestBody Map<String, Object> request) {
+        try {
+            Long paymentId = Long.valueOf(request.get("paymentId").toString());
+            
+            // Simulate failed payment
+            var payment = paymentService.getPaymentById(paymentId);
+            payment.setStatus("FAILED");
+            payment.setGatewayId("TEST_FAILED_" + System.currentTimeMillis());
+            payment.setUpdatedAt(LocalDateTime.now());
+            
+            var savedPayment = paymentService.updatePayment(payment);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Payment marked as failed for testing");
+            response.put("payment", savedPayment);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 }

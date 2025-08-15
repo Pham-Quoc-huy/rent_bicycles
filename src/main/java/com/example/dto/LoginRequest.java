@@ -1,7 +1,14 @@
 package com.example.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
+
 public class LoginRequest {
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Email không đúng định dạng")
     private String email;
+    
+    @NotBlank(message = "Mật khẩu không được để trống")
     private String password;
     
     // Constructors

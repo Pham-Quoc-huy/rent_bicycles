@@ -42,6 +42,9 @@ public interface PaymentService {
     // Cập nhật payment status
     Payment updatePaymentStatus(Long paymentId, PaymentStatusUpdateRequest request);
     
+    // Cập nhật payment
+    Payment updatePayment(Payment payment);
+    
     // Xử lý webhook từ payment gateway
     void processWebhook(String gatewayName, Map<String, Object> webhookData);
     

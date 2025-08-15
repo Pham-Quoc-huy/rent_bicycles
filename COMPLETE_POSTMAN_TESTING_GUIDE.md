@@ -647,4 +647,3 @@ pm.test("Response time is less than 2000ms", function () {
 ---
 
 **Với hướng dẫn này, bạn có thể test toàn bộ chức năng của project một cách có hệ thống và đầy đủ!** 🎯
-

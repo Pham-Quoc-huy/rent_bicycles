@@ -4,6 +4,8 @@ import com.example.dto.AuthResponse;
 import com.example.dto.LoginRequest;
 import com.example.dto.RegisterRequest;
 import com.example.service.AuthService;
+import com.example.exception.*;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,86 +20,38 @@ public class AuthController {
     
     // Đăng ký
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
-        // Validation cơ bản
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Email không được để trống"));
-        }
-        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Mật khẩu không được để trống"));
-        }
-        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Họ tên không được để trống"));
-        }
-        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Số điện thoại không được để trống"));
-        }
-        
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        // Validation sẽ được xử lý bởi @Valid và GlobalExceptionHandler
         AuthResponse response = authService.register(request);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Đăng nhập
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        // Validation cơ bản
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Email không được để trống"));
-        }
-        if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Mật khẩu không được để trống"));
-        }
-        
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        // Validation sẽ được xử lý bởi @Valid và GlobalExceptionHandler
         AuthResponse response = authService.login(request);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Đăng nhập Google
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> loginWithGoogle(@RequestBody GoogleLoginRequest request) {
-        // Validation cơ bản
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Email không được để trống"));
-        }
-        if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Họ tên không được để trống"));
-        }
-        if (request.getGoogleId() == null || request.getGoogleId().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Google ID không được để trống"));
-        }
-        
+        // Validation sẽ được xử lý bởi @Valid và GlobalExceptionHandler
         AuthResponse response = authService.loginWithGoogle(
             request.getEmail(), 
             request.getFullName(), 
             request.getGoogleId(), 
             request.getAvatarUrl()
         );
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Kiểm tra token
     @GetMapping("/validate")
     public ResponseEntity<AuthResponse> validateToken(@RequestHeader("Authorization") String token) {
-        if (token == null || token.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Token không được để trống"));
-        }
-        if (!token.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Token phải bắt đầu với 'Bearer '"));
+        if (token == null || !token.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Token không hợp lệ");
         }
         
         String actualToken = token.substring(7); // Bỏ "Bearer "
@@ -106,7 +60,7 @@ public class AuthController {
         if (userOpt.isPresent()) {
             return ResponseEntity.ok(AuthResponse.loginSuccess(actualToken, userOpt.get()));
         } else {
-            return ResponseEntity.badRequest().body(AuthResponse.error("Token không hợp lệ hoặc đã hết hạn"));
+            throw new UnauthorizedAccessException("Token không hợp lệ hoặc đã hết hạn");
         }
     }
     

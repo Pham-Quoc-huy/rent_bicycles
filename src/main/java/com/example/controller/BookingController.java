@@ -4,6 +4,8 @@ import com.example.dto.BookingRequest;
 import com.example.dto.BookingResponse;
 import com.example.entity.Booking;
 import com.example.service.BookingService;
+import com.example.exception.*;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,19 +24,14 @@ public class BookingController {
     
     // Đặt xe
     @PostMapping("/create")
-    public ResponseEntity<BookingResponse> createBooking(@RequestBody BookingRequest request) {
+    public ResponseEntity<BookingResponse> createBooking(@Valid @RequestBody BookingRequest request) {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
-            return ResponseEntity.badRequest().body(BookingResponse.error("Không tìm thấy thông tin người dùng"));
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
         }
         
         BookingResponse response = bookingService.createBooking(userEmail, request);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Lấy danh sách booking của user hiện tại
@@ -42,7 +39,7 @@ public class BookingController {
     public ResponseEntity<List<BookingResponse>> getMyBookings() {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
-            return ResponseEntity.badRequest().body(List.of());
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
         }
         
         List<BookingResponse> bookings = bookingService.getUserBookings(userEmail);
@@ -54,16 +51,11 @@ public class BookingController {
     public ResponseEntity<BookingResponse> getBookingById(@PathVariable Long bookingId) {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
-            return ResponseEntity.badRequest().body(BookingResponse.error("Không tìm thấy thông tin người dùng"));
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
         }
         
         BookingResponse response = bookingService.getBookingById(bookingId, userEmail);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Hủy booking
@@ -71,16 +63,11 @@ public class BookingController {
     public ResponseEntity<BookingResponse> cancelBooking(@PathVariable Long bookingId) {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
-            return ResponseEntity.badRequest().body(BookingResponse.error("Không tìm thấy thông tin người dùng"));
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
         }
         
         BookingResponse response = bookingService.cancelBooking(bookingId, userEmail);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Hoàn thành booking (lấy xe)
@@ -88,16 +75,11 @@ public class BookingController {
     public ResponseEntity<BookingResponse> completeBooking(@PathVariable Long bookingId) {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
-            return ResponseEntity.badRequest().body(BookingResponse.error("Không tìm thấy thông tin người dùng"));
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
         }
         
         BookingResponse response = bookingService.completeBooking(bookingId, userEmail);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Admin: Lấy tất cả booking
@@ -125,12 +107,7 @@ public class BookingController {
     @PostMapping("/admin/{bookingId}/confirm")
     public ResponseEntity<BookingResponse> confirmBooking(@PathVariable Long bookingId) {
         BookingResponse response = bookingService.confirmBooking(bookingId);
-        
-        if (response.isSuccess()) {
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.badRequest().body(response);
-        }
+        return ResponseEntity.ok(response);
     }
     
     // Helper method để lấy email của user hiện tại

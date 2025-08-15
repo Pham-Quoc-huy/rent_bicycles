@@ -5,9 +5,11 @@ import com.example.service.PaymentGatewayService;
 import com.example.dto.PaymentRequest;
 import com.example.dto.PaymentStatusUpdateRequest;
 import com.example.entity.Payment;
+import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -36,15 +38,9 @@ public class PaymentController {
      * Tạo payment mới
      */
     @PostMapping("/create")
-    public ResponseEntity<?> createPayment(@RequestBody PaymentRequest request) {
-        try {
-            var response = paymentService.createPayment(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi tạo payment: " + e.getMessage()
-            ));
-        }
+    public ResponseEntity<?> createPayment(@Valid @RequestBody PaymentRequest request) {
+        var response = paymentService.createPayment(request);
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -52,17 +48,11 @@ public class PaymentController {
      */
     @PostMapping("/invoice/{invoiceId}/create")
     public ResponseEntity<?> createPaymentForInvoice(@PathVariable Long invoiceId,
-                                                   @RequestBody PaymentRequest request) {
-        try {
-            // Đảm bảo invoiceId trong request khớp với path
-            request.setInvoiceId(invoiceId);
-            var response = paymentService.createPayment(request);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi tạo payment: " + e.getMessage()
-            ));
-        }
+                                                   @Valid @RequestBody PaymentRequest request) {
+        // Đảm bảo invoiceId trong request khớp với path
+        request.setInvoiceId(invoiceId);
+        var response = paymentService.createPayment(request);
+        return ResponseEntity.ok(response);
     }
     
     /**
@@ -70,14 +60,8 @@ public class PaymentController {
      */
     @GetMapping("/{paymentId}")
     public ResponseEntity<?> getPaymentById(@PathVariable Long paymentId) {
-        try {
-            Payment payment = paymentService.getPaymentById(paymentId);
-            return ResponseEntity.ok(payment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payment: " + e.getMessage()
-            ));
-        }
+        Payment payment = paymentService.getPaymentById(paymentId);
+        return ResponseEntity.ok(payment);
     }
     
     /**
@@ -85,14 +69,8 @@ public class PaymentController {
      */
     @GetMapping("/gateway/{gatewayId}")
     public ResponseEntity<?> getPaymentByGatewayId(@PathVariable String gatewayId) {
-        try {
-            Payment payment = paymentService.getPaymentByGatewayId(gatewayId);
-            return ResponseEntity.ok(payment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payment: " + e.getMessage()
-            ));
-        }
+        Payment payment = paymentService.getPaymentByGatewayId(gatewayId);
+        return ResponseEntity.ok(payment);
     }
     
     /**
@@ -100,14 +78,8 @@ public class PaymentController {
      */
     @GetMapping("/transaction/{transactionId}")
     public ResponseEntity<?> getPaymentByTransactionId(@PathVariable String transactionId) {
-        try {
-            Payment payment = paymentService.getPaymentByTransactionId(transactionId);
-            return ResponseEntity.ok(payment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payment: " + e.getMessage()
-            ));
-        }
+        Payment payment = paymentService.getPaymentByTransactionId(transactionId);
+        return ResponseEntity.ok(payment);
     }
     
     /**
@@ -115,14 +87,8 @@ public class PaymentController {
      */
     @GetMapping("/invoice/{invoiceId}")
     public ResponseEntity<?> getPaymentsByInvoiceId(@PathVariable Long invoiceId) {
-        try {
-            List<Payment> payments = paymentService.getPaymentsByInvoiceId(invoiceId);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payments: " + e.getMessage()
-            ));
-        }
+        List<Payment> payments = paymentService.getPaymentsByInvoiceId(invoiceId);
+        return ResponseEntity.ok(payments);
     }
     
     /**
@@ -130,14 +96,8 @@ public class PaymentController {
      */
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getPaymentsByStatus(@PathVariable String status) {
-        try {
-            List<Payment> payments = paymentService.getPaymentsByStatus(status);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payments: " + e.getMessage()
-            ));
-        }
+        List<Payment> payments = paymentService.getPaymentsByStatus(status);
+        return ResponseEntity.ok(payments);
     }
     
     /**
@@ -145,14 +105,8 @@ public class PaymentController {
      */
     @GetMapping("/method/{paymentMethod}")
     public ResponseEntity<?> getPaymentsByMethod(@PathVariable String paymentMethod) {
-        try {
-            List<Payment> payments = paymentService.getPaymentsByMethod(paymentMethod);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payments: " + e.getMessage()
-            ));
-        }
+        List<Payment> payments = paymentService.getPaymentsByMethod(paymentMethod);
+        return ResponseEntity.ok(payments);
     }
     
     /**
@@ -160,14 +114,8 @@ public class PaymentController {
      */
     @GetMapping("/user/{userId}")
     public ResponseEntity<?> getPaymentsByUserId(@PathVariable Long userId) {
-        try {
-            List<Payment> payments = paymentService.getPaymentsByUserId(userId);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payments: " + e.getMessage()
-            ));
-        }
+        List<Payment> payments = paymentService.getPaymentsByUserId(userId);
+        return ResponseEntity.ok(payments);
     }
     
     /**
@@ -177,18 +125,12 @@ public class PaymentController {
     public ResponseEntity<?> getPaymentsByDateRange(
             @RequestParam String startTime,
             @RequestParam String endTime) {
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            LocalDateTime start = LocalDateTime.parse(startTime, formatter);
-            LocalDateTime end = LocalDateTime.parse(endTime, formatter);
-            
-            List<Payment> payments = paymentService.getPaymentsByDateRange(start, end);
-            return ResponseEntity.ok(payments);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy payments: " + e.getMessage()
-            ));
-        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime start = LocalDateTime.parse(startTime, formatter);
+        LocalDateTime end = LocalDateTime.parse(endTime, formatter);
+        
+        List<Payment> payments = paymentService.getPaymentsByDateRange(start, end);
+        return ResponseEntity.ok(payments);
     }
     
     // ==================== PAYMENT STATUS MANAGEMENT ====================
@@ -199,15 +141,9 @@ public class PaymentController {
     @PutMapping("/{paymentId}/status")
     public ResponseEntity<?> updatePaymentStatus(
             @PathVariable Long paymentId,
-            @RequestBody PaymentStatusUpdateRequest request) {
-        try {
-            Payment payment = paymentService.updatePaymentStatus(paymentId, request);
-            return ResponseEntity.ok(payment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi cập nhật payment status: " + e.getMessage()
-            ));
-        }
+            @Valid @RequestBody PaymentStatusUpdateRequest request) {
+        Payment payment = paymentService.updatePaymentStatus(paymentId, request);
+        return ResponseEntity.ok(payment);
     }
     
     /**
@@ -217,14 +153,8 @@ public class PaymentController {
     public ResponseEntity<?> cancelPayment(
             @PathVariable Long paymentId,
             @RequestParam String reason) {
-        try {
-            Payment payment = paymentService.cancelPayment(paymentId, reason);
-            return ResponseEntity.ok(payment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi hủy payment: " + e.getMessage()
-            ));
-        }
+        Payment payment = paymentService.cancelPayment(paymentId, reason);
+        return ResponseEntity.ok(payment);
     }
     
     /**
@@ -235,14 +165,8 @@ public class PaymentController {
             @PathVariable Long paymentId,
             @RequestParam BigDecimal amount,
             @RequestParam String reason) {
-        try {
-            Payment payment = paymentService.refundPayment(paymentId, amount, reason);
-            return ResponseEntity.ok(payment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi refund payment: " + e.getMessage()
-            ));
-        }
+        Payment payment = paymentService.refundPayment(paymentId, amount, reason);
+        return ResponseEntity.ok(payment);
     }
     
     // ==================== WEBHOOK HANDLERS ====================
@@ -253,38 +177,29 @@ public class PaymentController {
     @PostMapping("/webhook/vnpay")
     public ResponseEntity<?> handleVNPayWebhook(@RequestBody String payload,
                                               @RequestParam String vnp_SecureHash) {
-        try {
-            // Verify signature
-            if (!vnpayGatewayService.verifyWebhookSignature(payload, vnp_SecureHash)) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "error", "VNPay webhook signature không hợp lệ"
-                ));
-            }
-            
-            // Process webhook data
-            Map<String, Object> webhookData = vnpayGatewayService.processWebhookData(payload);
-            
-            // Process payment status
-            String gatewayId = (String) webhookData.get("gatewayId");
-            String status = (String) webhookData.get("status");
-            
-            if ("SUCCESS".equals(status)) {
-                var payment = paymentService.processPaymentSuccess(gatewayId, (String) webhookData.get("transactionId"));
-                return ResponseEntity.ok(Map.of(
-                    "message", "VNPay webhook xử lý thành công",
-                    "payment", payment
-                ));
-            } else {
-                var payment = paymentService.processPaymentFailure(gatewayId, (String) webhookData.get("message"));
-                return ResponseEntity.ok(Map.of(
-                    "message", "VNPay webhook xử lý thành công",
-                    "payment", payment
-                ));
-            }
-            
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi xử lý VNPay webhook: " + e.getMessage()
+        // Verify signature
+        if (!vnpayGatewayService.verifyWebhookSignature(payload, vnp_SecureHash)) {
+            throw new IllegalArgumentException("VNPay webhook signature không hợp lệ");
+        }
+        
+        // Process webhook data
+        Map<String, Object> webhookData = vnpayGatewayService.processWebhookData(payload);
+        
+        // Process payment status
+        String gatewayId = (String) webhookData.get("gatewayId");
+        String status = (String) webhookData.get("status");
+        
+        if ("SUCCESS".equals(status)) {
+            var payment = paymentService.processPaymentSuccess(gatewayId, (String) webhookData.get("transactionId"));
+            return ResponseEntity.ok(Map.of(
+                "message", "VNPay webhook xử lý thành công",
+                "payment", payment
+            ));
+        } else {
+            var payment = paymentService.processPaymentFailure(gatewayId, (String) webhookData.get("message"));
+            return ResponseEntity.ok(Map.of(
+                "message", "VNPay webhook xử lý thành công",
+                "payment", payment
             ));
         }
     }
@@ -295,38 +210,29 @@ public class PaymentController {
     @PostMapping("/webhook/momo")
     public ResponseEntity<?> handleMOMOWebhook(@RequestBody String payload,
                                              @RequestParam String signature) {
-        try {
-            // Verify signature
-            if (!momoGatewayService.verifyWebhookSignature(payload, signature)) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "error", "MOMO webhook signature không hợp lệ"
-                ));
-            }
-            
-            // Process webhook data
-            Map<String, Object> webhookData = momoGatewayService.processWebhookData(payload);
-            
-            // Process payment status
-            String gatewayId = (String) webhookData.get("gatewayId");
-            String status = (String) webhookData.get("status");
-            
-            if ("SUCCESS".equals(status)) {
-                var payment = paymentService.processPaymentSuccess(gatewayId, (String) webhookData.get("transactionId"));
-                return ResponseEntity.ok(Map.of(
-                    "message", "MOMO webhook xử lý thành công",
-                    "payment", payment
-                ));
-            } else {
-                var payment = paymentService.processPaymentFailure(gatewayId, (String) webhookData.get("message"));
-                return ResponseEntity.ok(Map.of(
-                    "message", "MOMO webhook xử lý thành công",
-                    "payment", payment
-                ));
-            }
-            
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi xử lý MOMO webhook: " + e.getMessage()
+        // Verify signature
+        if (!momoGatewayService.verifyWebhookSignature(payload, signature)) {
+            throw new IllegalArgumentException("MOMO webhook signature không hợp lệ");
+        }
+        
+        // Process webhook data
+        Map<String, Object> webhookData = momoGatewayService.processWebhookData(payload);
+        
+        // Process payment status
+        String gatewayId = (String) webhookData.get("gatewayId");
+        String status = (String) webhookData.get("status");
+        
+        if ("SUCCESS".equals(status)) {
+            var payment = paymentService.processPaymentSuccess(gatewayId, (String) webhookData.get("transactionId"));
+            return ResponseEntity.ok(Map.of(
+                "message", "MOMO webhook xử lý thành công",
+                "payment", payment
+            ));
+        } else {
+            var payment = paymentService.processPaymentFailure(gatewayId, (String) webhookData.get("message"));
+            return ResponseEntity.ok(Map.of(
+                "message", "MOMO webhook xử lý thành công",
+                "payment", payment
             ));
         }
     }
@@ -340,18 +246,12 @@ public class PaymentController {
     public ResponseEntity<?> getPaymentStatistics(
             @RequestParam String startTime,
             @RequestParam String endTime) {
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            LocalDateTime start = LocalDateTime.parse(startTime, formatter);
-            LocalDateTime end = LocalDateTime.parse(endTime, formatter);
-            
-            Map<String, Object> stats = paymentService.getPaymentStatistics(start, end);
-            return ResponseEntity.ok(stats);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy thống kê: " + e.getMessage()
-            ));
-        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        LocalDateTime start = LocalDateTime.parse(startTime, formatter);
+        LocalDateTime end = LocalDateTime.parse(endTime, formatter);
+        
+        Map<String, Object> stats = paymentService.getPaymentStatistics(start, end);
+        return ResponseEntity.ok(stats);
     }
     
     /**
@@ -359,14 +259,8 @@ public class PaymentController {
      */
     @GetMapping("/admin/summary")
     public ResponseEntity<?> getAdminPaymentSummary() {
-        try {
-            Map<String, Object> summary = paymentService.getAdminPaymentSummary();
-            return ResponseEntity.ok(summary);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy summary: " + e.getMessage()
-            ));
-        }
+        Map<String, Object> summary = paymentService.getAdminPaymentSummary();
+        return ResponseEntity.ok(summary);
     }
     
     /**
@@ -374,16 +268,10 @@ public class PaymentController {
      */
     @PostMapping("/admin/process-expired")
     public ResponseEntity<?> processExpiredPayments() {
-        try {
-            paymentService.processExpiredPayments();
-            return ResponseEntity.ok(Map.of(
-                "message", "Đã xử lý payment expired"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi xử lý payment expired: " + e.getMessage()
-            ));
-        }
+        paymentService.processExpiredPayments();
+        return ResponseEntity.ok(Map.of(
+            "message", "Đã xử lý payment expired"
+        ));
     }
     
     // ==================== UTILITY ENDPOINTS ====================
@@ -393,20 +281,14 @@ public class PaymentController {
      */
     @GetMapping("/{paymentId}/can-refund")
     public ResponseEntity<?> canRefund(@PathVariable Long paymentId) {
-        try {
-            Payment payment = paymentService.getPaymentById(paymentId);
-            boolean canRefund = paymentService.canRefund(payment);
-            
-            return ResponseEntity.ok(Map.of(
-                "paymentId", paymentId,
-                "canRefund", canRefund,
-                "reason", canRefund ? "Có thể refund" : "Không thể refund"
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi kiểm tra refund: " + e.getMessage()
-            ));
-        }
+        Payment payment = paymentService.getPaymentById(paymentId);
+        boolean canRefund = paymentService.canRefund(payment);
+        
+        return ResponseEntity.ok(Map.of(
+            "paymentId", paymentId,
+            "canRefund", canRefund,
+            "reason", canRefund ? "Có thể refund" : "Không thể refund"
+        ));
     }
     
     /**
@@ -416,20 +298,14 @@ public class PaymentController {
     public ResponseEntity<?> calculateTransactionFee(
             @RequestParam BigDecimal amount,
             @RequestParam String paymentMethod) {
-        try {
-            BigDecimal fee = paymentService.calculateTransactionFee(amount, paymentMethod);
-            
-            return ResponseEntity.ok(Map.of(
-                "amount", amount,
-                "paymentMethod", paymentMethod,
-                "transactionFee", fee,
-                "totalAmount", amount.add(fee)
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi tính phí: " + e.getMessage()
-            ));
-        }
+        BigDecimal fee = paymentService.calculateTransactionFee(amount, paymentMethod);
+        
+        return ResponseEntity.ok(Map.of(
+            "amount", amount,
+            "paymentMethod", paymentMethod,
+            "transactionFee", fee,
+            "totalAmount", amount.add(fee)
+        ));
     }
     
     /**
@@ -437,14 +313,8 @@ public class PaymentController {
      */
     @GetMapping("/gateway-info")
     public ResponseEntity<?> getGatewayInfo() {
-        try {
-            Map<String, Object> info = vnpayGatewayService.getGatewayInfo();
-            return ResponseEntity.ok(info);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy gateway info: " + e.getMessage()
-            ));
-        }
+        Map<String, Object> info = vnpayGatewayService.getGatewayInfo();
+        return ResponseEntity.ok(info);
     }
     
     /**
@@ -452,29 +322,20 @@ public class PaymentController {
      */
     @GetMapping("/invoice/{invoiceId}/pickup-qr")
     public ResponseEntity<?> getPickupQRCode(@PathVariable Long invoiceId) {
-        try {
-            // Kiểm tra payment đã thành công chưa
-            List<Payment> payments = paymentService.getPaymentsByInvoiceId(invoiceId);
-            boolean hasSuccessfulPayment = payments.stream()
-                    .anyMatch(p -> "SUCCESS".equals(p.getStatus()));
-            
-            if (!hasSuccessfulPayment) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Chưa thanh toán thành công"
-                ));
-            }
-            
-            // Tìm QR code lấy xe
-            // TODO: Implement logic tìm QR code lấy xe
-            return ResponseEntity.ok(Map.of(
-                "message", "QR code lấy xe đã được tạo",
-                "invoiceId", invoiceId
-            ));
-            
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                "error", "Lỗi lấy QR code lấy xe: " + e.getMessage()
-            ));
+        // Kiểm tra payment đã thành công chưa
+        List<Payment> payments = paymentService.getPaymentsByInvoiceId(invoiceId);
+        boolean hasSuccessfulPayment = payments.stream()
+                .anyMatch(p -> "SUCCESS".equals(p.getStatus()));
+        
+        if (!hasSuccessfulPayment) {
+            throw new PaymentRequiredException("Chưa thanh toán thành công");
         }
+        
+        // Tìm QR code lấy xe
+        // TODO: Implement logic tìm QR code lấy xe
+        return ResponseEntity.ok(Map.of(
+            "message", "QR code lấy xe đã được tạo",
+            "invoiceId", invoiceId
+        ));
     }
 }

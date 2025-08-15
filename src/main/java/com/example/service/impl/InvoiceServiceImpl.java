@@ -3,9 +3,12 @@ package com.example.service.impl;
 import com.example.service.InvoiceService;
 import com.example.entity.Booking;
 import com.example.entity.Invoice;
+import com.example.entity.Station;
 import com.example.entity.User;
+import com.example.exception.*;
 import com.example.repository.BookingRepository;
 import com.example.repository.InvoiceRepository;
+import com.example.repository.StationRepository;
 import com.example.service.QRCodeService;
 import com.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,11 +37,14 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Autowired
     private QRCodeService qrCodeService;
     
+    @Autowired
+    private StationRepository stationRepository;
+    
     @Override
     public Invoice createInvoiceFromBooking(Long bookingId) {
         Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
         if (bookingOpt.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy booking");
+            throw new BookingNotFoundException("Không tìm thấy booking với ID: " + bookingId);
         }
         
         Booking booking = bookingOpt.get();
@@ -102,46 +108,57 @@ public class InvoiceServiceImpl implements InvoiceService {
     
 
     
-    @Override
-    public Invoice returnBike(String qrCode) {
+        @Override
+    public Invoice returnBike(String qrCode, Long returnStationId) {
         // Tìm invoice dựa trên QR code
         Optional<Invoice> invoiceOpt = qrCodeService.findInvoiceByQrCode(qrCode);
         if (invoiceOpt.isEmpty()) {
-            throw new RuntimeException("QR code không hợp lệ");
+            throw new InvalidQRCodeException("QR code không hợp lệ");
         }
         
         Invoice invoice = invoiceOpt.get();
         
         if (!"PICKED_UP".equals(invoice.getBikeStatus())) {
-            throw new RuntimeException("Xe chưa được lấy");
+            throw new BikeStatusException("Xe chưa được lấy");
         }
         
         LocalDateTime now = LocalDateTime.now();
         invoice.setRentalEndTime(now);
         invoice.setBikeStatus("RETURNED");
         
-        // Tính thời gian thuê xe (giờ và phút)
+        // Xác định trạm trả xe
+        Station returnStation = null;
+        if (returnStationId != null) {
+            // Trả xe tại trạm khác
+            Optional<Station> stationOpt = stationRepository.findById(returnStationId);
+            if (stationOpt.isEmpty()) {
+                throw new StationNotFoundException("Không tìm thấy trạm trả xe với ID: " + returnStationId);
+            }
+            returnStation = stationOpt.get();
+            invoice.setReturnStation(returnStation);
+        } else {
+            // Trả xe tại trạm gốc (trạm lấy xe)
+            invoice.setReturnStation(invoice.getStation());
+            returnStation = invoice.getStation();
+        }
+        
+        // Tính thời gian thuê xe (chỉ để thống kê, không tính lại tiền)
         if (invoice.getRentalStartTime() != null) {
             long totalMinutes = ChronoUnit.MINUTES.between(invoice.getRentalStartTime(), now);
             long hours = totalMinutes / 60;
-            long remainingMinutes = totalMinutes % 60;
             
             invoice.setTotalTime(hours);
             
-            // Tính giá tiền cơ bản (theo giờ)
-            double basePrice = invoice.getBikeQuantity() * 500.0 * Math.max(1, hours);
-            
-            // Tính phí phạt nếu trả xe quá giờ thuê
-            double penaltyFee = 0.0;
-            if (remainingMinutes > 0) {
-                // Mỗi phút quá giờ = 9.0đ
-                penaltyFee = remainingMinutes * 9.0;
-            }
-            
-            // Tổng giá tiền = giá cơ bản + phí phạt
-            double actualPrice = basePrice + penaltyFee;
-            invoice.setTotalPrice(actualPrice);
+            // Không tính lại tiền - giữ nguyên totalPrice đã tính khi đặt xe
+            // Chỉ cập nhật thời gian sử dụng để thống kê
         }
+        
+        // Cập nhật số lượng xe tại trạm trả xe
+        int currentAvailable = returnStation.getAvailableBikes();
+        int returnedBikes = invoice.getBikeQuantity();
+        
+        returnStation.setAvailableBikes(currentAvailable + returnedBikes);
+        stationRepository.save(returnStation);
         
         return invoiceRepository.save(invoice);
     }
@@ -150,14 +167,14 @@ public class InvoiceServiceImpl implements InvoiceService {
     public Invoice markBikeForReturn(Long invoiceId) {
         Optional<Invoice> invoiceOpt = invoiceRepository.findById(invoiceId);
         if (invoiceOpt.isEmpty()) {
-            throw new RuntimeException("Không tìm thấy invoice");
+            throw new InvoiceNotFoundException("Không tìm thấy hóa đơn với ID: " + invoiceId);
         }
         
         Invoice invoice = invoiceOpt.get();
         
         // Kiểm tra trạng thái xe - chỉ cho phép đánh dấu trả khi đã lấy xe
         if (!"PICKED_UP".equals(invoice.getBikeStatus())) {
-            throw new RuntimeException("Xe chưa được lấy. Không thể đánh dấu trả.");
+            throw new BikeStatusException("Xe chưa được lấy. Không thể đánh dấu trả.");
         }
         
         // Cập nhật trạng thái xe thành RETURNED (đã đánh dấu trả)
@@ -199,16 +216,14 @@ public class InvoiceServiceImpl implements InvoiceService {
         // Tìm invoice dựa trên QR code
         Optional<Invoice> invoiceOpt = qrCodeService.findInvoiceByQrCode(qrCode);
         if (invoiceOpt.isEmpty()) {
-            throw new RuntimeException("QR code không hợp lệ");
+            throw new InvalidQRCodeException("QR code không hợp lệ");
         }
         
         Invoice invoice = invoiceOpt.get();
         
-
-        
         // Kiểm tra trạng thái xe
         if (!"NOT_PICKED_UP".equals(invoice.getBikeStatus())) {
-            throw new RuntimeException("Xe đã được lấy hoặc đã trả");
+            throw new BikeStatusException("Xe đã được lấy hoặc đã trả");
         }
         
         // Trả về thông tin cần thiết
@@ -226,20 +241,30 @@ public class InvoiceServiceImpl implements InvoiceService {
         // Tìm invoice dựa trên QR code
         Optional<Invoice> invoiceOpt = qrCodeService.findInvoiceByQrCode(qrCode);
         if (invoiceOpt.isEmpty()) {
-            throw new RuntimeException("QR code không hợp lệ");
+            throw new InvalidQRCodeException("QR code không hợp lệ");
         }
         
         Invoice invoice = invoiceOpt.get();
         
-
-        
         if (!"NOT_PICKED_UP".equals(invoice.getBikeStatus())) {
-            throw new RuntimeException("Xe đã được lấy hoặc đã trả");
+            throw new BikeStatusException("Xe đã được lấy hoặc đã trả");
         }
         
         // Cập nhật trạng thái xe
         invoice.setBikeStatus("PICKED_UP");
         invoice.setRentalStartTime(LocalDateTime.now());
+        
+        // Cập nhật số lượng xe tại trạm
+        Station station = invoice.getStation();
+        int currentAvailable = station.getAvailableBikes();
+        int requestedBikes = invoice.getBikeQuantity();
+        
+        if (currentAvailable < requestedBikes) {
+            throw new InsufficientBikesException("Không đủ xe tại trạm để lấy. Có sẵn: " + currentAvailable + " xe");
+        }
+        
+        station.setAvailableBikes(currentAvailable - requestedBikes);
+        stationRepository.save(station);
             
         return invoiceRepository.save(invoice);
     }
