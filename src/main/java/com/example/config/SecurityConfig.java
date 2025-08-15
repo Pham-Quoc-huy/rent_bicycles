@@ -43,6 +43,7 @@ public class SecurityConfig {
             .requestMatchers("/api/stations/city/**").permitAll() // Cho phép tìm trạm theo thành phố
             .requestMatchers("/api/stations/available").permitAll() // Cho phép xem trạm có xe
             .requestMatchers("/api/stations/search").permitAll() // Cho phép tìm trạm
+            .requestMatchers("/api/payments/webhook/**").permitAll() // Cho phép webhook từ payment gateway
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/api/stations/**").hasRole("ADMIN") // Admin mới được tạo/sửa/xóa trạm
             .anyRequest().authenticated()

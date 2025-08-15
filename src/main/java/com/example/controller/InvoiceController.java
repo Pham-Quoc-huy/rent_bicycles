@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.entity.Invoice;
+import com.example.dto.InvoiceResponse;
 import com.example.service.InvoiceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/invoices")
@@ -19,12 +22,25 @@ public class InvoiceController {
     @Autowired
     private InvoiceService invoiceService;
     
+    // Tạo invoice từ booking
+    @PostMapping("/create-from-booking/{bookingId}")
+    public ResponseEntity<?> createInvoiceFromBooking(@PathVariable Long bookingId) {
+        try {
+            Invoice invoice = invoiceService.createInvoiceFromBooking(bookingId);
+            InvoiceResponse response = new InvoiceResponse(invoice);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+    
     // Lấy hóa đơn theo booking ID
     @GetMapping("/booking/{bookingId}")
-    public ResponseEntity<Invoice> getInvoiceByBookingId(@PathVariable Long bookingId) {
+    public ResponseEntity<?> getInvoiceByBookingId(@PathVariable Long bookingId) {
         Optional<Invoice> invoice = invoiceService.getInvoiceByBookingId(bookingId);
         if (invoice.isPresent()) {
-            return ResponseEntity.ok(invoice.get());
+            InvoiceResponse response = new InvoiceResponse(invoice.get());
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -32,10 +48,11 @@ public class InvoiceController {
     
     // Lấy hóa đơn theo ID
     @GetMapping("/{invoiceId}")
-    public ResponseEntity<Invoice> getInvoiceById(@PathVariable Long invoiceId) {
+    public ResponseEntity<?> getInvoiceById(@PathVariable Long invoiceId) {
         Optional<Invoice> invoice = invoiceService.getInvoiceById(invoiceId);
         if (invoice.isPresent()) {
-            return ResponseEntity.ok(invoice.get());
+            InvoiceResponse response = new InvoiceResponse(invoice.get());
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -43,47 +60,62 @@ public class InvoiceController {
     
     // Lấy tất cả hóa đơn của user hiện tại
     @GetMapping("/my-invoices")
-    public ResponseEntity<List<Invoice>> getMyInvoices() {
+    public ResponseEntity<?> getMyInvoices() {
         String userEmail = getCurrentUserEmail();
         if (userEmail == null) {
             return ResponseEntity.badRequest().build();
         }
         
         List<Invoice> invoices = invoiceService.getUserInvoices(userEmail);
-        return ResponseEntity.ok(invoices);
+        List<InvoiceResponse> responses = invoices.stream()
+                .map(InvoiceResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
     
-    // Lấy hóa đơn chưa thanh toán của user
-    @GetMapping("/my-unpaid-invoices")
-    public ResponseEntity<List<Invoice>> getMyUnpaidInvoices() {
-        String userEmail = getCurrentUserEmail();
-        if (userEmail == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        
-        List<Invoice> invoices = invoiceService.getUserUnpaidInvoices(userEmail);
-        return ResponseEntity.ok(invoices);
-    }
+
     
-    // Thanh toán hóa đơn (quét QR và lấy xe)
-    @PostMapping("/{invoiceId}/pay")
-    public ResponseEntity<Invoice> payInvoice(@PathVariable Long invoiceId) {
+    // Kiểm tra có thể lấy xe không (dựa vào QR code)
+    @GetMapping("/check-pickup")
+    public ResponseEntity<?> checkBikePickup(@RequestParam String qrCode) {
         try {
-            Invoice paidInvoice = invoiceService.payInvoice(invoiceId);
-            return ResponseEntity.ok(paidInvoice);
+            var result = invoiceService.checkBikePickup(qrCode);
+            return ResponseEntity.ok(result);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
     
-    // Trả xe về trạm
-    @PostMapping("/{invoiceId}/return")
-    public ResponseEntity<Invoice> returnBike(@PathVariable Long invoiceId) {
+    // Lấy xe (quét QR code)
+    @PostMapping("/pickup-by-qr")
+    public ResponseEntity<?> pickupBikeByQR(@RequestParam String qrCode) {
         try {
-            Invoice returnedInvoice = invoiceService.returnBike(invoiceId);
+            Invoice invoice = invoiceService.pickupBike(qrCode);
+            return ResponseEntity.ok(invoice);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+    
+    // User bấm nút RETURNED (đánh dấu muốn trả xe)
+    @PostMapping("/{invoiceId}/mark-return")
+    public ResponseEntity<?> markBikeForReturn(@PathVariable Long invoiceId) {
+        try {
+            Invoice invoice = invoiceService.markBikeForReturn(invoiceId);
+            return ResponseEntity.ok(invoice);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
+        }
+    }
+    
+    // Trả xe về trạm (quét QR code)
+    @PostMapping("/return-by-qr")
+    public ResponseEntity<?> returnBikeByQR(@RequestParam String qrCode) {
+        try {
+            Invoice returnedInvoice = invoiceService.returnBike(qrCode);
             return ResponseEntity.ok(returnedInvoice);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Lỗi: " + e.getMessage());
         }
     }
     
@@ -94,12 +126,7 @@ public class InvoiceController {
         return ResponseEntity.ok(invoices);
     }
     
-    // Admin: Lấy hóa đơn theo trạng thái thanh toán
-    @GetMapping("/admin/status/{paymentStatus}")
-    public ResponseEntity<List<Invoice>> getInvoicesByPaymentStatus(@PathVariable String paymentStatus) {
-        List<Invoice> invoices = invoiceService.getInvoicesByPaymentStatus(paymentStatus);
-        return ResponseEntity.ok(invoices);
-    }
+
     
     // Admin: Lấy hóa đơn theo station
     @GetMapping("/admin/station/{stationId}")

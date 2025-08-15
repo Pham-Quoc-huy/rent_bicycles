@@ -1,0 +1,262 @@
+{
+  "info": {
+    "name": "Rent Bicycles Payment API",
+    "description": "Collection để test chức năng thanh toán",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "jwtToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Nguyễn Văn A\",\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\",\n  \"phone\": \"0123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('jwtToken', response.token);",
+                  "    console.log('JWT Token saved:', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Booking & Invoice",
+      "item": [
+        {
+          "name": "Create Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stationId\": 1,\n  \"bikeQuantity\": 2,\n  \"notes\": \"Thuê xe cho cuối tuần\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookings/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookings", "create"]
+            }
+          }
+        },
+        {
+          "name": "Get Invoice by Booking ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/booking/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices", "booking", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payment",
+      "item": [
+        {
+          "name": "Initiate Payment - CARD",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/initiate/1?paymentMethod=CARD",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "initiate", "1"],
+              "query": [
+                {
+                  "key": "paymentMethod",
+                  "value": "CARD"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Initiate Payment - MOMO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/initiate/1?paymentMethod=MOMO",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "initiate", "1"],
+              "query": [
+                {
+                  "key": "paymentMethod",
+                  "value": "MOMO"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Check Payment Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/check-status/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "check-status", "1"]
+            }
+          }
+        },
+        {
+          "name": "Get Payment Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/info/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "info", "1"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwtToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/cancel/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "cancel", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stripe Webhook",
+      "item": [
+        {
+          "name": "Test Stripe Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Stripe-Signature",
+                "value": "t=1234567890,v1=abc123"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"evt_test_webhook\",\n  \"object\": \"event\",\n  \"type\": \"checkout.session.completed\",\n  \"data\": {\n    \"object\": {\n      \"id\": \"cs_test_...\",\n      \"object\": \"checkout.session\",\n      \"metadata\": {\n        \"invoice_id\": \"1\",\n        \"user_id\": \"1\"\n      },\n      \"payment_status\": \"paid\",\n      \"amount_total\": 100000\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/stripe/webhook",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payments", "stripe", "webhook"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

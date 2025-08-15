@@ -29,6 +29,9 @@ public class AuthController {
         if (request.getFullName() == null || request.getFullName().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(AuthResponse.error("Họ tên không được để trống"));
         }
+        if (request.getPhone() == null || request.getPhone().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(AuthResponse.error("Số điện thoại không được để trống"));
+        }
         
         AuthResponse response = authService.register(request);
         

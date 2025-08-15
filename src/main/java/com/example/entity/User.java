@@ -20,7 +20,7 @@ public class User {
     @Column(nullable = false)
     private String fullName;
     
-    @Column(nullable = false)
+    @Column(nullable = true) // Cho phép NULL để hỗ trợ Google login
     private String phone;
     
     @Enumerated(EnumType.STRING)
@@ -68,6 +68,7 @@ public class User {
         this.avatarUrl = avatarUrl;
         this.role = UserRole.USER; // Mặc định là USER khi đăng ký qua Google
         this.password = null; // Không cần password cho Google login
+        this.phone = "Chưa cập nhật"; // Giá trị mặc định cho phone khi đăng nhập qua Google
     }
     
     // Getters and Setters

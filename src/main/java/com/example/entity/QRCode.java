@@ -14,13 +14,21 @@ public class QRCode {
     
     @Column(nullable = false)
     private Long invoiceId; // ID của hoá đơn, liên kết với hoá đơn
+    
+    @Column(nullable = false)
+    private String type; // Loại QR code: PICKUP (lấy xe), RETURN (trả xe)
+    
+    @Column
+    private String status; // Trạng thái: ACTIVE, USED, EXPIRED
 
     // Constructors
     public QRCode() {}
     
-    public QRCode(String qrCode, Long invoiceId) {
+    public QRCode(String qrCode, Long invoiceId, String type) {
         this.qrCode = qrCode;
         this.invoiceId = invoiceId;
+        this.type = type;
+        this.status = "ACTIVE";
     }
 
     // Getters and Setters
@@ -46,5 +54,21 @@ public class QRCode {
 
     public void setInvoiceId(Long invoiceId) {
         this.invoiceId = invoiceId;
+    }
+    
+    public String getType() {
+        return type;
+    }
+    
+    public void setType(String type) {
+        this.type = type;
+    }
+    
+    public String getStatus() {
+        return status;
+    }
+    
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

@@ -1,7 +1,15 @@
 package com.example.entity;
 
 import java.time.LocalDateTime;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "invoices")
@@ -25,9 +33,7 @@ public class Invoice {
 
     private Integer bikeQuantity;  // Số lượng xe đã thuê
     private Double totalPrice;  // Tổng số tiền thanh toán
-    private String paymentStatus;  // Trạng thái thanh toán (NOT_PAID, PAID)
     private String bikeStatus;    // Trạng thái xe (NOT_PICKED_UP, PICKED_UP, RETURNED)
-    private String qrCode;  // Mã QR thanh toán
 
     private LocalDateTime rentalStartTime;  // Thời gian bắt đầu thuê xe (khi quét QR)
     private LocalDateTime rentalEndTime;  // Thời gian trả xe
@@ -39,7 +45,6 @@ public class Invoice {
     // Constructors
     public Invoice() {
         this.createdAt = LocalDateTime.now();
-        this.paymentStatus = "NOT_PAID";
         this.bikeStatus = "NOT_PICKED_UP";
     }
     
@@ -50,7 +55,6 @@ public class Invoice {
         this.station = station;
         this.bikeQuantity = booking.getBikeQuantity();
         this.totalPrice = booking.getEstimatedPrice();
-        // rentalStartTime sẽ được set khi user quét QR và lấy xe
     }
 
     // Getters and Setters
@@ -102,28 +106,12 @@ public class Invoice {
         this.totalPrice = totalPrice;
     }
 
-    public String getPaymentStatus() {
-        return paymentStatus;
-    }
-
-    public void setPaymentStatus(String paymentStatus) {
-        this.paymentStatus = paymentStatus;
-    }
-
     public String getBikeStatus() {
         return bikeStatus;
     }
 
     public void setBikeStatus(String bikeStatus) {
         this.bikeStatus = bikeStatus;
-    }
-
-    public String getQrCode() {
-        return qrCode;
-    }
-
-    public void setQrCode(String qrCode) {
-        this.qrCode = qrCode;
     }
 
     public LocalDateTime getRentalStartTime() {
@@ -166,7 +154,7 @@ public class Invoice {
                 ", station=" + (station != null ? station.getLocation() : "null") +
                 ", bikeQuantity=" + bikeQuantity +
                 ", totalPrice=" + totalPrice +
-                ", paymentStatus='" + paymentStatus + '\'' +
+                ", bikeStatus='" + bikeStatus + '\'' +
                 '}';
     }
 }
