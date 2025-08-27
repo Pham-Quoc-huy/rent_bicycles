@@ -36,6 +36,7 @@ public class Invoice {
     private Station returnStation;  // Trạm trả xe (có thể khác trạm lấy xe)
 
     private Integer bikeQuantity;  // Số lượng xe đã thuê
+    @Column(columnDefinition = "DECIMAL(10,2)")
     private Double totalPrice;  // Tổng số tiền thanh toán
     private String bikeStatus;    // Trạng thái xe (NOT_PICKED_UP, PICKED_UP, RETURNED)
 

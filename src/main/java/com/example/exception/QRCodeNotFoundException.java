@@ -8,3 +8,6 @@ public class QRCodeNotFoundException extends RuntimeException {
         super(message);
     }
 }
+
+
+

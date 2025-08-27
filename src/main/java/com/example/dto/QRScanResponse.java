@@ -122,3 +122,6 @@ public class QRScanResponse {
         this.totalTime = totalTime;
     }
 }
+
+
+

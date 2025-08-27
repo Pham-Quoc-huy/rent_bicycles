@@ -35,7 +35,7 @@ public class Booking {
     @Column
     private String notes;
     
-    @Column
+    @Column(columnDefinition = "DECIMAL(10,2)")
     private Double estimatedPrice; // Giá ước tính
     
     // Constructors

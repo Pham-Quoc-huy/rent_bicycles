@@ -8,3 +8,6 @@ public class InvalidQRCodeException extends RuntimeException {
         super(message);
     }
 }
+
+
+
