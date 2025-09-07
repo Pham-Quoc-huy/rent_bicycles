@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bookings")
@@ -107,6 +108,21 @@ public class BookingController {
     @PostMapping("/admin/{bookingId}/confirm")
     public ResponseEntity<BookingResponse> confirmBooking(@PathVariable Long bookingId) {
         BookingResponse response = bookingService.confirmBooking(bookingId);
+        return ResponseEntity.ok(response);
+    }
+    
+    // Cập nhật trạng thái booking
+    @PutMapping("/{bookingId}/status")
+    public ResponseEntity<BookingResponse> updateBookingStatus(
+            @PathVariable Long bookingId,
+            @RequestBody Map<String, String> request) {
+        String userEmail = getCurrentUserEmail();
+        if (userEmail == null) {
+            throw new UnauthorizedAccessException("Không tìm thấy thông tin người dùng");
+        }
+        
+        String status = request.get("status");
+        BookingResponse response = bookingService.updateBookingStatus(bookingId, status, userEmail);
         return ResponseEntity.ok(response);
     }
     

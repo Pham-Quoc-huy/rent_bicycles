@@ -2,9 +2,11 @@ package com.example.controller;
 
 import com.example.service.PaymentService;
 import com.example.service.PaymentGatewayService;
+import com.example.service.QRCodeService;
 import com.example.dto.PaymentRequest;
 import com.example.dto.PaymentStatusUpdateRequest;
 import com.example.entity.Payment;
+import com.example.entity.QRCode;
 import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +34,9 @@ public class PaymentController {
     @Autowired
     private PaymentGatewayService momoGatewayService;
     
+    @Autowired
+    private QRCodeService qrCodeService;
+    
     // ==================== PAYMENT MANAGEMENT ====================
     
     /**
@@ -53,6 +58,43 @@ public class PaymentController {
         request.setInvoiceId(invoiceId);
         var response = paymentService.createPayment(request);
         return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * Tạo payment thành công ngay lập tức (cho demo/testing)
+     */
+    @PostMapping("/invoice/{invoiceId}/create-success")
+    public ResponseEntity<?> createSuccessfulPayment(@PathVariable Long invoiceId,
+                                                   @Valid @RequestBody PaymentRequest request) {
+        // Đảm bảo invoiceId trong request khớp với path
+        request.setInvoiceId(invoiceId);
+        var response = paymentService.createSuccessfulPayment(request);
+        
+                // Tạo QR code sau khi thanh toán thành công
+                try {
+                    String qrCodeText = String.format("http://localhost:3000/views/invoice-detail.html?id=%d", invoiceId);
+                    QRCode qrCode = qrCodeService.createQRCode(qrCodeText, invoiceId, "PICKUP");
+            
+            // Thêm thông tin QR code vào response
+            Map<String, Object> result = new HashMap<>();
+            result.put("payment", response);
+            result.put("qrCode", Map.of(
+                "qrCodeId", qrCode.getId(),
+                "qrCode", qrCode.getQrCode(),
+                "invoiceId", qrCode.getInvoiceId(),
+                "type", qrCode.getType(),
+                "imageUrl", "/api/qr/image/" + qrCode.getQrCode()
+            ));
+            result.put("message", "Thanh toán thành công và QR code đã được tạo");
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            // Nếu tạo QR code thất bại, vẫn trả về payment response
+            Map<String, Object> result = new HashMap<>();
+            result.put("payment", response);
+            result.put("message", "Thanh toán thành công nhưng không thể tạo QR code: " + e.getMessage());
+            return ResponseEntity.ok(result);
+        }
     }
     
     /**
@@ -332,10 +374,30 @@ public class PaymentController {
         }
         
         // Tìm QR code lấy xe
-        // TODO: Implement logic tìm QR code lấy xe
-        return ResponseEntity.ok(Map.of(
-            "message", "QR code lấy xe đã được tạo",
-            "invoiceId", invoiceId
-        ));
+        String qrCodeText = String.format("INVOICE:%d:PICKUP", invoiceId);
+        var qrCodeOpt = qrCodeService.findQRCodeByQrCode(qrCodeText);
+        
+        if (qrCodeOpt.isEmpty()) {
+            // Tạo QR code mới nếu chưa có
+            QRCode qrCode = qrCodeService.createQRCode(qrCodeText, invoiceId, "PICKUP");
+            return ResponseEntity.ok(Map.of(
+                "qrCodeId", qrCode.getId(),
+                "qrCode", qrCode.getQrCode(),
+                "invoiceId", qrCode.getInvoiceId(),
+                "type", qrCode.getType(),
+                "imageUrl", "/api/qr/image/" + qrCode.getQrCode(),
+                "message", "QR code lấy xe đã được tạo"
+            ));
+        } else {
+            QRCode qrCode = qrCodeOpt.get();
+            return ResponseEntity.ok(Map.of(
+                "qrCodeId", qrCode.getId(),
+                "qrCode", qrCode.getQrCode(),
+                "invoiceId", qrCode.getInvoiceId(),
+                "type", qrCode.getType(),
+                "imageUrl", "/api/qr/image/" + qrCode.getQrCode(),
+                "message", "QR code lấy xe đã tồn tại"
+            ));
+        }
     }
 }

@@ -15,6 +15,9 @@ public interface PaymentService {
     // Tạo payment mới
     PaymentResponse createPayment(PaymentRequest request);
     
+    // Tạo payment thành công ngay lập tức (cho demo/testing)
+    PaymentResponse createSuccessfulPayment(PaymentRequest request);
+    
     // Lấy payment theo ID
     Payment getPaymentById(Long paymentId);
     

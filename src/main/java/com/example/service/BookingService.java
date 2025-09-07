@@ -33,4 +33,7 @@ public interface BookingService {
     
     // Lấy booking theo station
     List<BookingResponse> getBookingsByStation(Long stationId);
+    
+    // Cập nhật trạng thái booking
+    BookingResponse updateBookingStatus(Long bookingId, String status, String userEmail);
 }

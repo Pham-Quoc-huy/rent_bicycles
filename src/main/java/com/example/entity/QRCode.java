@@ -20,6 +20,12 @@ public class QRCode {
     
     @Column
     private String status; // Trạng thái: ACTIVE, USED, EXPIRED
+    
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] qrCodeImage; // Hình ảnh QR code dạng byte array
+    
+    @Column
+    private String imagePath; // Đường dẫn file hình ảnh (tùy chọn)
 
     // Constructors
     public QRCode() {}
@@ -70,5 +76,21 @@ public class QRCode {
     
     public void setStatus(String status) {
         this.status = status;
+    }
+    
+    public byte[] getQrCodeImage() {
+        return qrCodeImage;
+    }
+    
+    public void setQrCodeImage(byte[] qrCodeImage) {
+        this.qrCodeImage = qrCodeImage;
+    }
+    
+    public String getImagePath() {
+        return imagePath;
+    }
+    
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 }

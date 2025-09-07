@@ -115,6 +115,53 @@ public class PaymentServiceImpl implements PaymentService {
     }
     
     @Override
+    @Transactional
+    public PaymentResponse createSuccessfulPayment(PaymentRequest request) {
+        // Validate request
+        if (!validatePaymentRequest(request)) {
+            throw new IllegalArgumentException("Payment request không hợp lệ");
+        }
+        
+        // Kiểm tra invoice có tồn tại không
+        Optional<com.example.entity.Invoice> invoiceOpt = invoiceService.getInvoiceById(request.getInvoiceId());
+        if (invoiceOpt.isEmpty()) {
+            throw new InvoiceNotFoundException("Không tìm thấy invoice với ID: " + request.getInvoiceId());
+        }
+        
+        // Tạo payment record với status SUCCESS
+        Payment payment = new Payment();
+        payment.setInvoiceId(request.getInvoiceId());
+        payment.setAmount(request.getAmount());
+        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setCustomerEmail(request.getCustomerEmail());
+        payment.setCustomerPhone(request.getCustomerPhone());
+        payment.setDescription(request.getDescription() != null ? request.getDescription() : "Thanh toán thuê xe");
+        payment.setStatus("SUCCESS");
+        payment.setTransactionId("TXN_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 10000));
+        payment.setGatewayId("GW_" + request.getPaymentMethod().toUpperCase() + "_" + System.currentTimeMillis());
+        payment.setCompletedAt(LocalDateTime.now());
+        payment.setExpiredAt(LocalDateTime.now().plusMinutes(15));
+        
+        // Lưu payment
+        payment = paymentRepository.save(payment);
+        
+        // Tạo response
+        PaymentResponse response = new PaymentResponse();
+        response.setPaymentId(payment.getId());
+        response.setInvoiceId(payment.getInvoiceId());
+        response.setAmount(payment.getAmount());
+        response.setCurrency(payment.getCurrency());
+        response.setPaymentMethod(payment.getPaymentMethod());
+        response.setStatus(payment.getStatus());
+        response.setGatewayId(payment.getGatewayId());
+        response.setCreatedAt(payment.getCreatedAt());
+        response.setExpiredAt(payment.getExpiredAt());
+        response.setDescription(payment.getDescription());
+        
+        return response;
+    }
+    
+    @Override
     public Payment getPaymentById(Long paymentId) {
         return paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentNotFoundException("Không tìm thấy payment với ID: " + paymentId));

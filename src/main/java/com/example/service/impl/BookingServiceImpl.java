@@ -205,4 +205,30 @@ public class BookingServiceImpl implements BookingService {
                 .map(booking -> BookingResponse.success(booking, ""))
                 .collect(Collectors.toList());
     }
+    
+    @Override
+    public BookingResponse updateBookingStatus(Long bookingId, String status, String userEmail) {
+        Optional<Booking> bookingOpt = bookingRepository.findById(bookingId);
+        if (bookingOpt.isEmpty()) {
+            throw new BookingNotFoundException("Không tìm thấy booking với ID: " + bookingId);
+        }
+        
+        Booking booking = bookingOpt.get();
+        
+        // Kiểm tra quyền truy cập
+        if (!booking.getUser().getEmail().equals(userEmail)) {
+            throw new UnauthorizedAccessException("Không có quyền cập nhật booking này");
+        }
+        
+        // Cập nhật trạng thái
+        try {
+            Booking.BookingStatus newStatus = Booking.BookingStatus.valueOf(status.toUpperCase());
+            booking.setStatus(newStatus);
+            bookingRepository.save(booking);
+            
+            return BookingResponse.success(booking, "Đã cập nhật trạng thái booking thành công");
+        } catch (IllegalArgumentException e) {
+            throw new BikeStatusException("Trạng thái không hợp lệ: " + status);
+        }
+    }
 }

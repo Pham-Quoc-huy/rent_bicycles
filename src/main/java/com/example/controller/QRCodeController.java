@@ -10,6 +10,9 @@ import com.example.service.PaymentService;
 import com.example.service.QRCodeService;
 import com.example.repository.StationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -187,5 +190,63 @@ public class QRCodeController {
             "stations", stationList,
             "message", "Danh sách trạm có thể trả xe"
         ));
+    }
+    
+    /**
+     * Lấy hình ảnh QR code
+     * @param qrCode Mã QR code
+     * @return Hình ảnh QR code dạng PNG
+     */
+    @GetMapping("/image/{qrCode}")
+    public ResponseEntity<byte[]> getQRCodeImage(@PathVariable String qrCode) {
+        Optional<com.example.entity.QRCode> qrCodeOpt = qrCodeService.findQRCodeByQrCode(qrCode);
+        
+        if (qrCodeOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        com.example.entity.QRCode qrCodeEntity = qrCodeOpt.get();
+        byte[] imageBytes = qrCodeEntity.getQrCodeImage();
+        
+        if (imageBytes == null || imageBytes.length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.IMAGE_PNG);
+        headers.setContentLength(imageBytes.length);
+        headers.set("Content-Disposition", "inline; filename=\"qr-code-" + qrCode + ".png\"");
+        
+        return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
+    }
+    
+    /**
+     * Tạo QR code mới cho invoice
+     * @param invoiceId ID của invoice
+     * @param type Loại QR code (PICKUP/RETURN)
+     * @return Thông tin QR code đã tạo
+     */
+    @PostMapping("/generate/{invoiceId}")
+    public ResponseEntity<?> generateQRCode(@PathVariable Long invoiceId, 
+                                          @RequestParam(defaultValue = "PICKUP") String type) {
+        try {
+            String qrCodeText = String.format("INVOICE:%d:%s", invoiceId, type);
+            com.example.entity.QRCode qrCode = qrCodeService.createQRCode(qrCodeText, invoiceId, type);
+            
+            return ResponseEntity.ok(Map.of(
+                "qrCodeId", qrCode.getId(),
+                "qrCode", qrCode.getQrCode(),
+                "invoiceId", qrCode.getInvoiceId(),
+                "type", qrCode.getType(),
+                "status", qrCode.getStatus(),
+                "imageUrl", "/api/qr/image/" + qrCode.getQrCode(),
+                "message", "Tạo QR code thành công"
+            ));
+            
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "Lỗi khi tạo QR code: " + e.getMessage()
+            ));
+        }
     }
 }

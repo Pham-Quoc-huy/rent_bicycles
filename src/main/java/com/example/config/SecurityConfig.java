@@ -44,6 +44,8 @@ public class SecurityConfig {
             .requestMatchers("/api/stations/available").permitAll() // Cho phép xem trạm có xe
             .requestMatchers("/api/stations/search").permitAll() // Cho phép tìm trạm
             .requestMatchers("/api/payments/webhook/**").permitAll() // Cho phép webhook từ payment gateway
+            .requestMatchers("/api/qr/image/**").permitAll() // Cho phép lấy hình ảnh QR code
+            .requestMatchers("/api/invoices/{id}").permitAll() // Cho phép xem chi tiết hóa đơn (để test)
             .requestMatchers("/api/admin/**").hasRole("ADMIN")
             .requestMatchers("/api/stations/**").hasRole("ADMIN") // Admin mới được tạo/sửa/xóa trạm
             .anyRequest().authenticated()

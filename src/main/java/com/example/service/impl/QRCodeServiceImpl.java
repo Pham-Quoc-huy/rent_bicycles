@@ -6,6 +6,7 @@ import com.example.dto.QRCodeResponse;
 import com.example.repository.QRCodeReponsitory;
 import com.example.repository.InvoiceRepository;
 import com.example.service.QRCodeService;
+import com.example.service.QRCodeGeneratorService;
 import com.example.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class QRCodeServiceImpl implements QRCodeService {
     
     @Autowired
     private InvoiceRepository invoiceRepository;
+    
+    @Autowired
+    private QRCodeGeneratorService qrCodeGeneratorService;
     
     @Override
     public Optional<QRCodeResponse> findByQrCode(String qrCode) {
@@ -78,9 +82,27 @@ public class QRCodeServiceImpl implements QRCodeService {
             throw new InvoiceNotFoundException("Invoice không tồn tại với ID: " + invoiceId);
         }
         
-        // Tạo QR code mới với type
-        QRCode newQRCode = new QRCode(qrCode, invoiceId, type);
-        return qrCodeRepository.save(newQRCode);
+        try {
+            // Tạo QR code mới với type
+            QRCode newQRCode = new QRCode(qrCode, invoiceId, type);
+            
+            // Tạo hình ảnh QR code
+            byte[] qrCodeImage = qrCodeGeneratorService.generateInvoiceQRCode(invoiceId, type);
+            newQRCode.setQrCodeImage(qrCodeImage);
+            
+            // Lưu vào database
+            QRCode savedQRCode = qrCodeRepository.save(newQRCode);
+            
+            System.out.println("QR Code created successfully: " + savedQRCode.getQrCode());
+            System.out.println("QR Code image size: " + (qrCodeImage != null ? qrCodeImage.length : 0) + " bytes");
+            
+            return savedQRCode;
+            
+        } catch (Exception e) {
+            System.err.println("Error creating QR code: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi tạo QR code: " + e.getMessage(), e);
+        }
     }
     
     @Override

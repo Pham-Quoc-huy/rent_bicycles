@@ -55,6 +55,7 @@
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/InvoiceService.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/PaymentGatewayService.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/PaymentService.java
+/Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/QRCodeGeneratorService.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/QRCodeService.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/impl/AuthServiceImpl.java
 /Users/quochuy15012005/Documents/rent_bicycles/rent_bicycles/src/main/java/com/example/service/impl/BookingServiceImpl.java
