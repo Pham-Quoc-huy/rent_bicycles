@@ -83,10 +83,13 @@ public class QRCodeServiceImpl implements QRCodeService {
         }
         
         try {
-            // Tạo QR code mới với type
-            QRCode newQRCode = new QRCode(qrCode, invoiceId, type);
+            // Tạo URL đầy đủ cho QR code
+            String qrCodeUrl = String.format("http://localhost:3000/invoiceDetail.html?id=%d&type=%s", invoiceId, type);
             
-            // Tạo hình ảnh QR code
+            // Tạo QR code mới với URL đầy đủ
+            QRCode newQRCode = new QRCode(qrCodeUrl, invoiceId, type);
+            
+            // Tạo hình ảnh QR code với URL đầy đủ
             byte[] qrCodeImage = qrCodeGeneratorService.generateInvoiceQRCode(invoiceId, type);
             newQRCode.setQrCodeImage(qrCodeImage);
             
@@ -94,6 +97,7 @@ public class QRCodeServiceImpl implements QRCodeService {
             QRCode savedQRCode = qrCodeRepository.save(newQRCode);
             
             System.out.println("QR Code created successfully: " + savedQRCode.getQrCode());
+            System.out.println("QR Code URL: " + qrCodeUrl);
             System.out.println("QR Code image size: " + (qrCodeImage != null ? qrCodeImage.length : 0) + " bytes");
             
             return savedQRCode;

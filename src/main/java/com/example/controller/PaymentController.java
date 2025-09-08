@@ -72,7 +72,7 @@ public class PaymentController {
         
                 // Tạo QR code sau khi thanh toán thành công
                 try {
-                    String qrCodeText = String.format("http://localhost:3000/views/invoice-detail.html?id=%d", invoiceId);
+                    String qrCodeText = String.format("http://localhost:3000/invoiceDetail.html?id=%d&type=PICKUP", invoiceId);
                     QRCode qrCode = qrCodeService.createQRCode(qrCodeText, invoiceId, "PICKUP");
             
             // Thêm thông tin QR code vào response

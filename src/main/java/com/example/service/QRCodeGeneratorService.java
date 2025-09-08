@@ -40,6 +40,19 @@ public class QRCodeGeneratorService {
      * @return byte array của hình ảnh QR code
      */
     public byte[] generateInvoiceQRCode(Long invoiceId, String type) throws WriterException, IOException {
+        // Tạo URL dẫn đến trang chi tiết invoice
+        String qrText = String.format("http://localhost:3000/invoiceDetail.html?id=%d&type=%s", invoiceId, type);
+        return generateQRCodeImage(qrText);
+    }
+    
+    /**
+     * Tạo QR code với ID đơn giản (dễ encode hơn)
+     * @param invoiceId ID của invoice
+     * @param type Loại QR code (PICKUP/RETURN)
+     * @return byte array của hình ảnh QR code
+     */
+    public byte[] generateSimpleInvoiceQRCode(Long invoiceId, String type) throws WriterException, IOException {
+        // Tạo QR code với format đơn giản: INVOICE:ID:TYPE
         String qrText = String.format("INVOICE:%d:%s", invoiceId, type);
         return generateQRCodeImage(qrText);
     }

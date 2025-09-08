@@ -59,6 +59,7 @@ com/example/entity/Booking$BookingStatus.class
 com/example/entity/Station.class
 com/example/dto/LoginRequest.class
 com/example/dto/PaymentStatusUpdateRequest.class
+com/example/service/QRCodeGeneratorService.class
 com/example/dto/PaymentRequest.class
 com/example/RentBicyclesApplication.class
 com/example/dto/QRCodeResponse.class
