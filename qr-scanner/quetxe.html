@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Trạm quét QR – Lấy/Trả xe</title>
+
+    <!-- Styles: dùng lại scan.css nếu bạn đã có -->
+    <link rel="stylesheet" href="../css/scan.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+    <!-- QR lib -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+      :root { --bg:#0a0b0e; --card:#121418; --fg:#e6e7e9; --muted:#9aa0a6; --accent:#22c55e; --danger:#ef4444; }
+      * { box-sizing: border-box; }
+      body { margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial; background: var(--bg); color: var(--fg); }
+      .header { position: sticky; top: 0; z-index: 20; height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 16px; background: rgba(10,11,14,0.7); backdrop-filter: blur(10px); border-bottom: 1px solid #1f232b; }
+      .header .back { font-size: 18px; color: var(--muted); }
+      .header h1 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: .2px; }
+
+      .container { max-width: 520px; margin: 0 auto; padding: 16px; }
+      .card { background: var(--card); border: 1px solid #1f232b; border-radius: 16px; padding: 16px; }
+
+      .reader-wrap { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; background: #0b0d12; display: grid; place-items:center; }
+      #reader { width: 100% !important; }
+      .qr-frame { position: absolute; inset: 16px; border-radius: 12px; border: 2px dashed rgba(255,255,255,.18); pointer-events: none; }
+
+      .controls { display:flex; gap:10px; margin-top:12px; }
+      .controls .btn { flex:1; display:inline-flex; align-items:center; justify-content:center; gap:10px; height:46px; border-radius: 12px; border: 1px solid #1f232b; background:#0f1217; color: var(--fg); font-weight: 600; }
+      .controls .btn[disabled]{ opacity:.6; }
+      .controls .primary { background: var(--accent); border-color: rgba(0,0,0,.2); color:#0a0b0e; }
+      .controls .danger { background: var(--danger); border-color: rgba(0,0,0,.2); color:#fff; }
+
+      .actions { display:flex; gap:10px; margin-top: 14px; }
+      .actions .btn { flex:1; height:48px; border-radius: 12px; border:1px solid #1f232b; background:#0f1217; color: var(--fg); font-weight:700; }
+      .actions .pickup.active, .actions .return.active { outline: 2px solid var(--accent); }
+
+      .status { margin-top: 12px; font-size: 13px; color: var(--muted); min-height: 18px; }
+
+      .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background:#101318; color:#fff; border:1px solid #20242c; border-radius:12px; padding: 10px 12px; font-size: 14px; display:none; }
+      .toast.show{ display:block; }
+
+      .nav { position: fixed; bottom:0; left:0; right:0; background: rgba(10,11,14,0.8); backdrop-filter: blur(10px); border-top: 1px solid #1f232b; height:64px; display:flex; align-items:center; justify-content: space-around; color: var(--muted); }
+
+      @media (min-width: 560px){ body { background: radial-gradient(1000px 400px at 50% -200px, #151922, transparent), var(--bg);} }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <span class="back" role="button" aria-label="Quay lại" onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></span>
+      <h1>Trạm quét QR</h1>
+    </header>
+
+    <main class="container">
+      <div class="card">
+        <div class="reader-wrap">
+          <div id="reader"></div>
+          <div class="qr-frame" aria-hidden="true"></div>
+        </div>
+
+        <div class="controls">
+          <button id="btnStart" class="btn primary"><i class="fa-solid fa-camera"></i> Bắt đầu quét</button>
+          <button id="btnStop" class="btn" disabled><i class="fa-solid fa-circle-stop"></i> Dừng</button>
+          <button id="btnTorch" class="btn" disabled><i class="fa-solid fa-bolt"></i> Đèn</button>
+        </div>
+
+        <div class="actions">
+          <button id="btnPickup" class="btn pickup active"><i class="fa-solid fa-unlock"></i> Lấy xe</button>
+          <button id="btnReturn" class="btn return"><i class="fa-solid fa-lock"></i> Trả xe</button>
+        </div>
+
+        <div class="status" id="status">Chọn hành động (Lấy/Trả), sau đó Bắt đầu quét mã QR trên hoá đơn.</div>
+      </div>
+    </main>
+
+    <nav class="nav">
+      <i class="fa-solid fa-house"></i>
+      <i class="fa-solid fa-list"></i>
+      <i class="fa-solid fa-bicycle"></i>
+      <i class="fa-solid fa-user"></i>
+    </nav>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      // ===== CONFIG (chỉnh theo backend của bạn) =====
+      const API_BASE = "/api/qr";            // ví dụ Spring Boot: @RequestMapping("/api/qr")
+      const SCAN_ENDPOINT = "/scan";         // POST { code, action } -> { success, message, data }
+      const SUCCESS_REDIRECT = "/success.html"; // trang sucess
+
+      // ===============================================
+      let qr;              // Html5Qrcode instance
+      let currentAction = "PICKUP"; // hoặc "RETURN"
+      let torchOn = false;
+      let cameraId = null;
+
+      const $ = (s)=>document.querySelector(s);
+      const $btnStart = $('#btnStart');
+      const $btnStop = $('#btnStop');
+      const $btnTorch = $('#btnTorch');
+      const $btnPickup = $('#btnPickup');
+      const $btnReturn = $('#btnReturn');
+      const $status = $('#status');
+      const $toast = $('#toast');
+
+      function toast(msg){
+        $toast.textContent = msg; $toast.classList.add('show');
+        setTimeout(()=> $toast.classList.remove('show'), 2200);
+      }
+
+      function setStatus(text){ $status.textContent = text; }
+
+      async function initCameras(){
+        const cams = await Html5Qrcode.getCameras().catch(()=>[]);
+        if(!cams || !cams.length){ throw new Error('Không tìm thấy camera. Hãy cấp quyền camera và dùng HTTPS.'); }
+        // Ưu tiên camera sau trên mobile nếu có
+        const back = cams.find(c=>/back|rear/i.test(c.label));
+        cameraId = (back || cams[0]).id;
+        return cams;
+      }
+
+      async function startScan(){
+        if(qr) return; // đang chạy
+        try {
+          await initCameras();
+          qr = new Html5Qrcode('reader', { verbose: false });
+          await qr.start(
+            cameraId,
+            { fps: 10, qrbox: { width: 240, height: 240 } },
+            onScanSuccess,
+            (err)=>{/* bỏ qua lỗi frame */}
+          );
+          $btnStart.disabled = true; $btnStop.disabled = false; $btnTorch.disabled = false;
+          setStatus('Đang quét… hãy đưa mã QR vào khung.');
+        } catch (e){
+          toast(e.message || 'Không thể khởi động camera');
+          setStatus('Lỗi: ' + (e.message || e));
+        }
+      }
+
+      async function stopScan(){
+        if(!qr) return;
+        try { await qr.stop(); await qr.clear(); } finally { qr = null; }
+        $btnStart.disabled = false; $btnStop.disabled = true; $btnTorch.disabled = true;
+        setStatus('Đã dừng quét.');
+      }
+
+      async function toggleTorch(){
+        if(!qr) return;
+        try {
+          torchOn = !torchOn;
+          await qr.applyVideoConstraints({ advanced: [{ torch: torchOn }] });
+        } catch { toast('Thiết bị không hỗ trợ đèn.'); }
+      }
+
+      // Debounce để không bắn nhiều request nếu camera đọc liên tiếp
+      let lastCode = '';
+      let lastAt = 0;
+      async function onScanSuccess(decodedText){
+        const now = Date.now();
+        if(decodedText === lastCode && now - lastAt < 1800) return; // bỏ trùng trong 1.8s
+        lastCode = decodedText; lastAt = now;
+        setStatus('Đã đọc mã: ' + decodedText + ' — đang gửi lên trạm…');
+        await handleScan(decodedText);
+      }
+      // hàm xử lí qr (cái này sửa theo backend)
+      async function handleScan(code){
+        try {
+          const res = await fetch(API_BASE + SCAN_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code, action: currentAction })
+          });
+          const data = await res.json().catch(()=>({ success:false, message:'Response không phải JSON' }));
+
+          if(!res.ok || data.success === false){
+            toast(data.message || ('Lỗi ' + res.status));
+            setStatus('Thất bại: ' + (data.message || res.statusText));
+            return;
+          }
+
+          // Thành công: tuỳ backend trả gì
+          toast(data.message || (currentAction === 'PICKUP' ? 'Đã xác nhận LẤY xe' : 'Đã xác nhận TRẢ xe'));
+          setStatus('OK. ' + (data.message || 'Đã cập nhật trạng thái.'));
+
+          // Tuỳ nhu cầu có redirect sang trang thành công
+          if (SUCCESS_REDIRECT){
+            const params = new URLSearchParams({ code, action: currentAction });
+            if (data?.data?.rentalId) params.set('rentalId', data.data.rentalId);
+            if (data?.data?.bikeId) params.set('bikeId', data.data.bikeId);
+            location.href = SUCCESS_REDIRECT + '?' + params.toString();
+          }
+        } catch (e){
+          toast('Không gửi được tới trạm: ' + e.message);
+          setStatus('Lỗi mạng: ' + e.message);
+        }
+      }
+
+      // UI: chọn hành động
+      function selectAction(action){
+        currentAction = action;
+        $btnPickup.classList.toggle('active', action==='PICKUP');
+        $btnReturn.classList.toggle('active', action==='RETURN');
+        setStatus((action==='PICKUP'?'Chế độ LẤY xe. ':'Chế độ TRẢ xe. ') + 'Nhấn Bắt đầu quét.');
+      }
+
+      // Bind events
+      $btnStart.addEventListener('click', startScan);
+      $btnStop.addEventListener('click', stopScan);
+      $btnTorch.addEventListener('click', toggleTorch);
+      $btnPickup.addEventListener('click', ()=> selectAction('PICKUP'));
+      $btnReturn.addEventListener('click', ()=> selectAction('RETURN'));
+
+      // Progressive enhancement: fallback chọn ảnh QR nếu không có camera
+      if(!('mediaDevices' in navigator)){
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file'; fileInput.accept = 'image/*';
+        fileInput.addEventListener('change', async (e)=>{
+          const f = e.target.files?.[0]; if(!f) return;
+          const res = await Html5Qrcode.scanFile(f, true).catch(()=>null);
+          if(res?.decodedText) onScanSuccess(res.decodedText); else toast('Không đọc được mã từ ảnh.');
+        });
+        document.querySelector('.controls').appendChild(fileInput);
+      }
+
+      // Auto-start nếu thêm ?autostart=1 trên URL (dùng cho kiosk)
+      const url = new URL(location.href);
+      if(url.searchParams.get('action') === 'return') selectAction('RETURN');
+      if(url.searchParams.get('autostart') === '1') startScan();
+    </script>
+  </body>
+</html>
